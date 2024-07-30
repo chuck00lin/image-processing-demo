@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Segmentation Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Qualify-Exam</h2>
+        <button class="button" onclick="showQuestion(1)">Question 1</button>
+        <button class="button" onclick="showQuestion(2)">Question 2</button>
+    </div>
+    <div class="main-content">
+        <div id="question1" style="display:none;">
+            <h1>Question 1: Image Segmentation</h1>
+            <h3>Step 1: Choose source</h3>
+            <input type="file" id="fileInput" style="display: none;">
+            <button id="selectImage" class="button">Select Image</button>
+            <button id="useSample" class="button">Use Sample</button>
+            <div class="image-container">
+                <div class="image-box">
+                    <img id="sourceImg" alt="Source Image">
+                    <!-- <p>Source Img</p> -->
+                </div>
+                <div class="image-box">
+                    <img id="groundTruthImg" alt="Ground Truth">
+                    <!-- <p>Ground Truth</p> -->
+                </div>
+            </div>
+
+            <h3>Step 2: Processing</h3>
+            <button id="start" class="button">Start</button>
+            
+            <div class="algorithm-results">
+                <div class="algorithm-box">
+                    <div class="image-wrapper">
+                        <img id="algorithm1Img" alt="Algorithm 1 Result">
+                    </div>
+                </div>
+                <div class="algorithm-box">
+                    <div class="image-wrapper">
+                        <img id="algorithm2Img" alt="Algorithm 2 Result">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="question2" style="display:none;">
+            <h1>Question 2: Connected Components Analysis</h1>
+            <h3>Step 1: Choose source</h3>
+            <input type="file" id="fileInputQ2" style="display: none;">
+            <button id="selectImageQ2" class="button">Select Image</button>
+            
+            <div class="image-container">
+                <div class="image-box">
+                    <img id="sourceImgQ2" alt="Source Image">
+                    <p>Source Img</p>
+                </div>
+            </div>
+            
+            <h3>Step 2: Processing</h3>
+            <button id="startQ2" class="button">Start</button>
+            
+            <div class="result-container">
+                <div class="result-box">
+                    <img id="resultImgQ2" alt="Result Image">
+                    <p>Result</p>
+                </div>
+                <div class="analysis-box">
+                    <p id="analysisTextQ2">Analysis will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

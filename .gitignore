@@ -1,0 +1,21 @@
+# Ignore BSDS500 directory
+BSDS500/
+
+# Ignore dataset directory
+dataset/
+
+# Ignore image-demo directory
+image-demo/
+
+# Ignore __pycache__ directory
+__pycache__/
+
+# Ignore saved_images directory
+saved_images/
+
+# Ignore uploads directory
+uploads/
+
+# Ignore the unet_model.pth file
+unet_model.pth
+
