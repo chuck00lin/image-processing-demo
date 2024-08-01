@@ -10,6 +10,11 @@ image-demo/
 # Ignore __pycache__ directory
 __pycache__/
 
+# Ignore proceesed data
+unet-hed-processed/
+
+unet-processed/
+
 # Ignore saved_images directory
 saved_images/
 

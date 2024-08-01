@@ -9,10 +9,8 @@ def process_image_q2(image_path):
     # Convert RGB to HSV and extract the saturation channel
     s = pcv.rgb2gray_hsv(rgb_img=img, channel='s')
 
-
     # Threshold the image
     s_thresh = pcv.threshold.binary(gray_img=s, threshold=36, object_type='light')
-    
 
     # Analyze the object
     analysis_image = pcv.analyze.size(img=img, labeled_mask=s_thresh)

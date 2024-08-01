@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import os
-from segmentation import process_image
+#from segmentation import process_image
+from question_one_deploy import process_image
 from connected_components import process_image_q2
 
 app = Flask(__name__)

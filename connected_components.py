@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-
+from plantcv import plantcv as pcv
 def process_image_q2(image_path):
     # Read the image
     img = cv2.imread(image_path, 0)

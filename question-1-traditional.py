@@ -9,8 +9,8 @@ def watershed():
 
     # list of images
     # 296059.jpg, 361010.jpg, 69020.jpg, 38092.jpg,147091.jpg
-    img = cv2.imread('./BSDS500/images/test/100007.jpg')
-
+    #img = cv2.imread('./BSDS500/images/test/100007.jpg')
+    img = cv2.imread('./color_corrected_img_temp.png')
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # plt.figure()

@@ -145,7 +145,7 @@ def apply_hed(image):
     return hed_output
 
 # Function to apply watershed
-def watershed( image):
+def apply_watershed( image):
     img = image
 
     # Convert to grayscale
@@ -180,83 +180,125 @@ def watershed( image):
     markers = cv2.watershed(img, markers)
     img[markers == -1] = [255, 0, 0]
 
-    # Generate the boolean mask for the watershed boundaries
+    # Generate the binary mask for the watershed boundaries
     boundary_mask = (markers == -1)
+    binary_result = np.uint8(boundary_mask) * 255
 
-    # Convert the boolean mask to an 8-bit image
-    boundary_image = boundary_mask.astype(np.uint8) * 255
+    # Create a color block image
+    color_blocks = np.zeros(img.shape, dtype=np.uint8)
+    for label in np.unique(markers):
+        if label == -1:
+            continue
+        color_blocks[markers == label] = np.random.randint(0, 255, 3).tolist()
 
-    # Return the segmented image and the boundary mask
-    return img, boundary_mask
+    # Mark watershed boundaries in red on the original image
+    img[markers == -1] = [255, 0, 0]
+
+    return img, binary_result, color_blocks
+
+def run_unet(image, model, device):
+    with torch.no_grad():
+        pred = model(image.to(device))
+        pred = torch.sigmoid(pred)
+        pred = pred.cpu().numpy()
+        pred = pred[0, 0, :, :]
+        pred = np.where(pred >= 0.5, 255, 0).astype(np.uint8)
+    return pred
+
+def process_image(image_path):
+    # Load the model
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = UNet(1).to(device)
+    model.load_state_dict(torch.load('unet_model.pth', map_location=device))
+    model.eval()
+
+    # Preprocess and run U-Net
+    input_image = preprocess_image(image_path)
+    unet_result = run_unet(input_image, model, device)
+
+    # Run HED
+    original_image = cv2.imread(image_path)
+    original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    original_image = cv2.resize(original_image, (480, 320))
+    hed_result = apply_hed(original_image)
+
+    # Save results
+    cv2.imwrite('static/result1.jpg', unet_result)
+    cv2.imwrite('static/result2.jpg', hed_result)
+
+    return 'result1.jpg', 'result2.jpg'
+
 
 # Main execution
 if __name__ == "__main__":
-    # Open file dialog to choose an image
-    Tk().withdraw()
-    image_path = askopenfilename(title="Select an image for segmentation")
-    
-    if image_path:
-        # Load and preprocess the image
-        input_image = preprocess_image(image_path)
-        original_image = cv2.imread(image_path)
-        original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
-        original_image = cv2.resize(original_image, (480, 320))  # Resize to match the model's input size
-        
-        # Run segmentation
-        segmentation_result = run_segmentation(input_image)
-
-        # Apply watershed
-        # Create a white line version of the mask
-        # Convert the segmentation result to an 8-bit single-channel image
-        segmentation_result_uint8 = (segmentation_result * 255).astype(np.uint8)
-        # Apply threshold to create a binary mask
-        _, mask = cv2.threshold(segmentation_result_uint8, 127, 255, cv2.THRESH_BINARY)
-
-        # Create a colored mask (white lines)
-        colored_mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-        colored_mask[np.where((colored_mask == [255, 255, 255]).all(axis=2))] = [0, 0, 0]
-
-        # Apply the mask to the source image
-        result_image = cv2.addWeighted(original_image, 1.0, colored_mask, 1.0, 0)
-
-        watershed_result, boundary_mask = watershed(result_image)
-
-         # Apply HED
-        hed_result = apply_hed(original_image)
-
-        # Display results in a 4x4 grid
-        plt.figure(figsize=(20, 20))
-        
-        # Original Image
-        plt.subplot(4, 4, 1)
-        plt.imshow(original_image)
-        plt.title("Original Image")
-        plt.axis('off')
-        
-        # U-Net Segmentation Result
-        plt.subplot(4, 4, 2)
-        plt.imshow(segmentation_result, cmap='gray')
-        plt.title("U-Net Segmentation")
-        plt.axis('off')
-
-        # Watershed Result
-        plt.subplot(4, 4, 3)
-        plt.imshow(watershed_result)
-        plt.title("Watershed Result")
-        plt.axis('off')
-
-        # HED Result
-        plt.subplot(4, 4, 4)
-        plt.imshow(hed_result, cmap='gray')
-        plt.title("HED Result")
-        plt.axis('off')
-
-        # Masked Image
-        plt.subplot(4, 4, 5)
-        plt.imshow(result_image)
-        plt.title("Masked Image")
-        plt.axis('off')
-        plt.show()
-
+    import sys
+    if len(sys.argv) > 1:
+        image_path = sys.argv[1]
+        process_image(image_path)
     else:
-        print("No image selected. Exiting.")
+        print("Please provide an image path as an argument.")
+    # Open file dialog to choose an image
+    # Tk().withdraw()
+    # image_path = askopenfilename(title="Select an image for segmentation")
+    
+    # if image_path:
+    #     # Load and preprocess the image
+    #     input_image = preprocess_image(image_path)
+    #     original_image = cv2.imread(image_path)
+    #     original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    #     original_image = cv2.resize(original_image, (480, 320))  # Resize to match the model's input size
+        
+    #     # 1. U-Net prediction
+    #     unet_result = run_segmentation(input_image)
+        
+    #     # 2. HED prediction
+    #     hed_result = apply_hed(original_image)
+        
+    #     # 3 & 4. Watershed binary mask and color blocks
+    #     watershed_binary, watershed_color, _ = apply_watershed(original_image)
+        
+    #     # 5. U-Net + Watershed
+    #     unet_merged = original_image.copy()
+    #     unet_merged[unet_result == 1] = [255, 255, 255]  # Mark U-Net prediction in white
+    #     _, unet_watershed_binary, unet_watershed_blocks= apply_watershed(unet_merged)
+        
+        # 6. U-Net + Watershed color blocks
+
+
+        # Display results
+        # plt.figure(figsize=(20, 15))
+        
+        # plt.subplot(3, 2, 1)
+        # plt.imshow(unet_result, cmap='gray')
+        # plt.title("1. U-Net Prediction")
+        # plt.axis('off')
+        
+        # plt.subplot(3, 2, 2)
+        # plt.imshow(unet_merged, cmap='gray')
+        # plt.title("2. unet_merged")
+        # plt.axis('off')
+        
+        # plt.subplot(3, 2, 3)
+        # plt.imshow(watershed_binary, cmap='gray')
+        # plt.title("3. Watershed Binary Mask")
+        # plt.axis('off')
+        
+        # plt.subplot(3, 2, 4)
+        # plt.imshow(watershed_color)
+        # plt.title("4. Watershed Color Blocks")
+        # plt.axis('off')
+        
+        # plt.subplot(3, 2, 5)
+        # plt.imshow(unet_watershed_binary)
+        # plt.title("5. U-Net + Watershed")
+        # plt.axis('off')
+        
+        # plt.subplot(3, 2, 6)
+        # plt.imshow(unet_watershed_blocks)
+        # plt.title("6. U-Net + Watershed Color Blocks")
+        # plt.axis('off')
+
+        # plt.tight_layout()
+        # plt.show()
+    # else:
+    #     print("No image selected. Exiting.")
